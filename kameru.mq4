@@ -127,6 +127,15 @@ int entryOnPerfectOrder() {
       
       //下から21日線、13日線、5日線の順になっているときは買いエントリー
       if(ma21_1 < ma13_1 && ma13_1 < ma5_1 && ma21 < ma13 && ma13 < ma5) {
+
+        double q0 = iOpen(thisSymbol, period, 1);
+        double q1 = iClose(thisSymbol, period, 1);
+
+        // かぶせ線のときはエントリーしない      
+        if(q0 < q1 && q1 < p0 && p0 > p1 && (q0 + q1) / 2.0 > p1) {
+          return -1;
+        }
+        
         return OP_BUY;
       }
     }
@@ -136,6 +145,15 @@ int entryOnPerfectOrder() {
 
       //上から21日線、13日線、5日線の順になっているときは売りエントリー
       if(ma21_1 > ma13_1 && ma13_1 > ma5_1 && ma21 > ma13 && ma13 > ma5) {
+
+        double q0 = iOpen(thisSymbol, period, 1);
+        double q1 = iClose(thisSymbol, period, 1);
+
+        // かぶせ線のときはエントリーしない      
+        if(q0 > q1 && q1 > p0 && p0 < p1 && (q0 + q1) / 2.0 < p1) {
+          return -1;
+        }
+
         return OP_SELL;
       }
     }  
