@@ -26,6 +26,8 @@ input int MACD_yokoyoko_period = 20; //MACD横ばい判定期間
 input double Mask_ATR_th = 20; //ボラ(ATR)判定閾値
 input int Mask_ATR_period = 20; //ボラ(ATR)判定期間
 
+extern double Narrow_Factor = 30; // ma13とma5の差がma21とma13のX%より小さいときにエントリーする
+
 const int period = PERIOD_M5;
 
 string thisSymbol;
@@ -90,18 +92,18 @@ int entryOnPerfectOrder() {
     return -1;
   }
 
-  double ma5 = iMA(thisSymbol, period, 5, 0, MODE_SMA, PRICE_WEIGHTED, 0);
-  double ma13 = iMA(thisSymbol, period, 13, 0, MODE_SMA, PRICE_WEIGHTED, 0);
-  double ma21 = iMA(thisSymbol, period, 21, 0, MODE_SMA, PRICE_WEIGHTED, 0);
-  double ma5_1 = iMA(thisSymbol, period, 5, 0, MODE_SMA, PRICE_WEIGHTED, 1);
-  double ma13_1 = iMA(thisSymbol, period, 13, 0, MODE_SMA, PRICE_WEIGHTED, 1);
-  double ma21_1 = iMA(thisSymbol, period, 21, 0, MODE_SMA, PRICE_WEIGHTED, 1);
+  double ma5 = iMA(thisSymbol, period, 5, 0, MODE_SMA, PRICE_CLOSE, 0);
+  double ma13 = iMA(thisSymbol, period, 13, 0, MODE_SMA, PRICE_CLOSE, 0);
+  double ma21 = iMA(thisSymbol, period, 21, 0, MODE_SMA, PRICE_CLOSE, 0);
+  double ma5_1 = iMA(thisSymbol, period, 5, 0, MODE_SMA, PRICE_CLOSE, 1);
+  double ma13_1 = iMA(thisSymbol, period, 13, 0, MODE_SMA, PRICE_CLOSE, 1);
+  double ma21_1 = iMA(thisSymbol, period, 21, 0, MODE_SMA, PRICE_CLOSE, 1);
 
-  double macd = iMACD(thisSymbol, period, 12, 26, 9, PRICE_WEIGHTED, 0, 0);
-  double macd_1 = iMACD(thisSymbol, period, 12, 26, 9, PRICE_WEIGHTED, 0, 1);
+  double macd = iMACD(thisSymbol, period, 12, 26, 9, PRICE_CLOSE, 0, 0);
+  double macd_1 = iMACD(thisSymbol, period, 12, 26, 9, PRICE_CLOSE, 0, 1);
 
-  double signal = iMACD(thisSymbol, period, 12, 26, 9, PRICE_WEIGHTED, 1, 0);
-  double signal_1 = iMACD(thisSymbol, period, 12, 26, 9, PRICE_WEIGHTED, 1, 1);
+  double signal = iMACD(thisSymbol, period, 12, 26, 9, PRICE_CLOSE, 1, 0);
+  double signal_1 = iMACD(thisSymbol, period, 12, 26, 9, PRICE_CLOSE, 1, 1);
 
   //MACDとシグナルがクロスしているときはエントリーしない
   if(macd_1 < signal_1 && signal < macd) {
@@ -128,15 +130,18 @@ int entryOnPerfectOrder() {
       //下から21日線、13日線、5日線の順になっているときは買いエントリー
       if(ma21_1 < ma13_1 && ma13_1 < ma5_1 && ma21 < ma13 && ma13 < ma5) {
 
-        double q0 = iOpen(thisSymbol, period, 1);
-        double q1 = iClose(thisSymbol, period, 1);
-
-        // かぶせ線のときはエントリーしない      
-        if(q0 < q1 && q1 < p0 && p0 > p1 && (q0 + q1) / 2.0 > p1) {
-          return -1;
-        }
+       //21日線と13日線の差よりも、13日線と5日線との差が小さいときにエントリー
+        if(Narrow_Factor * (ma13 - ma21) > ma5 - ma13) {
+ 
+          double q0 = iOpen(thisSymbol, period, 1);
+          double q1 = iClose(thisSymbol, period, 1);
+      
+          if(q0 < q1 && q1 < p0 && p0 > p1 && (q0 + q1) / 2.0 > p1) {
+            return -1;
+          }
         
-        return OP_BUY;
+          return OP_BUY;
+        }
       }
     }
 
@@ -145,16 +150,19 @@ int entryOnPerfectOrder() {
 
       //上から21日線、13日線、5日線の順になっているときは売りエントリー
       if(ma21_1 > ma13_1 && ma13_1 > ma5_1 && ma21 > ma13 && ma13 > ma5) {
+      
+        //21日線と13日線の差よりも、13日線と5日線との差が小さいときにエントリー
+        if(Narrow_Factor * (ma21 - ma13) > ma13 - ma5) {
 
-        double q0 = iOpen(thisSymbol, period, 1);
-        double q1 = iClose(thisSymbol, period, 1);
+          double q0 = iOpen(thisSymbol, period, 1);
+          double q1 = iClose(thisSymbol, period, 1);
+      
+          if(q0 > q1 && q1 > p0 && p0 < p1 && (q0 + q1) / 2.0 < p1) {
+            return -1;
+          }
 
-        // かぶせ線のときはエントリーしない      
-        if(q0 > q1 && q1 > p0 && p0 < p1 && (q0 + q1) / 2.0 < p1) {
-          return -1;
+          return OP_SELL;
         }
-
-        return OP_SELL;
       }
     }  
   }
@@ -191,6 +199,8 @@ int OnInit()
   
   TP_pips *= 10.0 * Point;
   SL_pips *= 10.0 * Point;
+  
+  Narrow_Factor *= 0.01;
   
   lastExitTime = -1;
   
