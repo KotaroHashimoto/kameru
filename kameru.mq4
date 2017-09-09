@@ -23,10 +23,11 @@ input bool London_Summer_Time = True; //ロンドンサマータイム
 input double MACD_yokoyoko_th = 0.01; //MACD横ばい判定閾値
 input int MACD_yokoyoko_period = 20; //MACD横ばい判定期間
 
-input double Mask_ATR_th = 20; //ボラ(ATR)判定閾値
+extern double Mask_ATR_th = 20; //ボラ(ATR)判定閾値(pips)
 input int Mask_ATR_period = 20; //ボラ(ATR)判定期間
 
-extern double Narrow_Factor = 30; // ma13とma5の差がma21とma13のX%より小さいときにエントリーする
+extern double Narrow_Factor = 30; // ma13とma5の差がma21とma13のX%より小さいときをエントリー対象とする
+extern double Slope_Det_Factor = 10; // ATRのX%だけ傾きがあるときをエントリー対象とする
 
 const int period = PERIOD_M5;
 
@@ -121,11 +122,13 @@ int entryOnPerfectOrder() {
   double high = iHigh(thisSymbol, period, 0);
   double low = iLow(thisSymbol, period, 0);
 
+  double th = atr * Slope_Det_Factor;
+
   //ローソク足が移動平均5日線に触れたときにエントリー
   if(low < ma5 && ma5 < high) {
 
     //３つの移動平均線とMACDがすべて右肩上がり
-    if(macd_1 < macd && ma21_1 < ma21 && ma13_1 < ma13 && ma5_1 < ma5) {
+    if(macd_1 < macd && ma21_1 + th < ma21 && ma13_1 + th < ma13 && ma5_1 + th < ma5) {
       
       //下から21日線、13日線、5日線の順になっているときは買いエントリー
       if(ma21_1 < ma13_1 && ma13_1 < ma5_1 && ma21 < ma13 && ma13 < ma5) {
@@ -146,7 +149,7 @@ int entryOnPerfectOrder() {
     }
 
     //３つの移動平均線とMACDがすべて右肩下がり
-    if(macd_1 > macd && ma21_1 > ma21 && ma13_1 > ma13 && ma5_1 > ma5) {
+    if(macd_1 > macd && ma21_1 > th + ma21 && ma13_1 > th + ma13 && ma5_1 > th + ma5) {
 
       //上から21日線、13日線、5日線の順になっているときは売りエントリー
       if(ma21_1 > ma13_1 && ma13_1 > ma5_1 && ma21 > ma13 && ma13 > ma5) {
@@ -199,8 +202,10 @@ int OnInit()
   
   TP_pips *= 10.0 * Point;
   SL_pips *= 10.0 * Point;
+  Mask_ATR_th *= 10.0 * Point;
   
   Narrow_Factor *= 0.01;
+  Slope_Det_Factor *= 0.01;
   
   lastExitTime = -1;
   
