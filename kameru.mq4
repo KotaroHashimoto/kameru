@@ -26,8 +26,9 @@ input int MACD_yokoyoko_period = 20; //MACD横ばい判定期間
 extern double Mask_ATR_th = 20; //ボラ(ATR)判定閾値(pips)
 input int Mask_ATR_period = 20; //ボラ(ATR)判定期間
 
-extern double Narrow_Factor = 30; // ma13とma5の差がma21とma13のX%より小さいときをエントリー対象とする
-extern double Slope_Det_Factor = 10; // ATRのX%だけ傾きがあるときをエントリー対象とする
+extern double Narrow_Factor = 30; // ma13とma5の差がma21とma13の差のX%より小さいときをエントリー対象とする
+extern double Slope_Det_Factor = 10; // ATRのX%以上の傾きがあるときをエントリー対象とする
+extern double Dist_Det_Factor = 10; // ma21, ma13, ma5がそれぞれATRのX%以上離れているときをエントリー対象とする
 
 const int period = PERIOD_M5;
 
@@ -123,6 +124,7 @@ int entryOnPerfectOrder() {
   double low = iLow(thisSymbol, period, 0);
 
   double th = atr * Slope_Det_Factor;
+  double ds = atr * Dist_Det_Factor;
 
   //ローソク足が移動平均5日線に触れたときにエントリー
   if(low < ma5 && ma5 < high) {
@@ -131,7 +133,7 @@ int entryOnPerfectOrder() {
     if(macd_1 < macd && ma21_1 + th < ma21 && ma13_1 + th < ma13 && ma5_1 + th < ma5) {
       
       //下から21日線、13日線、5日線の順になっているときは買いエントリー
-      if(ma21_1 < ma13_1 && ma13_1 < ma5_1 && ma21 < ma13 && ma13 < ma5) {
+      if(ma21_1 + ds < ma13_1 && ma13_1 + ds < ma5_1 && ma21 + ds < ma13 && ma13 + ds < ma5) {
 
        //21日線と13日線の差よりも、13日線と5日線との差が小さいときにエントリー
         if(Narrow_Factor * (ma13 - ma21) > ma5 - ma13) {
@@ -152,7 +154,7 @@ int entryOnPerfectOrder() {
     if(macd_1 > macd && ma21_1 > th + ma21 && ma13_1 > th + ma13 && ma5_1 > th + ma5) {
 
       //上から21日線、13日線、5日線の順になっているときは売りエントリー
-      if(ma21_1 > ma13_1 && ma13_1 > ma5_1 && ma21 > ma13 && ma13 > ma5) {
+      if(ma21_1 > ds + ma13_1 && ma13_1 > ds + ma5_1 && ma21 > ds + ma13 && ma13 > ds + ma5) {
       
         //21日線と13日線の差よりも、13日線と5日線との差が小さいときにエントリー
         if(Narrow_Factor * (ma21 - ma13) > ma13 - ma5) {
@@ -206,6 +208,7 @@ int OnInit()
   
   Narrow_Factor *= 0.01;
   Slope_Det_Factor *= 0.01;
+  Dist_Det_Factor *= 0.01;
   
   lastExitTime = -1;
   
