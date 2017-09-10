@@ -9,26 +9,41 @@
 #property version   "1.00"
 #property strict
 
-input int Magic_Number = 1; //マジックナンバー
-input double Entry_Lot = 0.1; //エントリーロット数
-extern double TP_pips = 10; //利確幅[pips]
-extern double SL_pips = 10; //損切幅[pips]
+//マジックナンバー
+input int Magic_Number = 1;
+//エントリーロット数
+input double Entry_Lot = 0.1;
+//利確幅[pips]
+extern double TP_pips = 10;
+//損切幅[pips]
+extern double SL_pips = 10;
 
-input double Mask_After_Exit_Min = 5; //決済後のエントリー禁止期間[分]
-input int No_Trade_Start_H = 2; //エントリー禁止時間開始[時]
-input int No_Trade_End_H = 10; //エントリー禁止時間終了[時]
+//決済後のエントリー禁止期間[分]
+input double Mask_After_Exit_Min = 5;
+//エントリー禁止時間開始[時]
+input int No_Trade_Start_H = 2;
+//エントリー禁止時間終了[時]
+input int No_Trade_End_H = 10;
 
-input bool London_Summer_Time = True; //ロンドンサマータイム
+//ロンドンサマータイム
+input bool London_Summer_Time = True;
 
-input double MACD_yokoyoko_th = 0.01; //MACD横ばい判定閾値
-input int MACD_yokoyoko_period = 20; //MACD横ばい判定期間
+//MACD横ばい判定閾値
+input double MACD_yokoyoko_th = 0.01;
+//MACD横ばい判定期間
+input int MACD_yokoyoko_period = 20;
 
-extern double Mask_ATR_th = 20; //ボラ(ATR)判定閾値(pips)
-input int Mask_ATR_period = 20; //ボラ(ATR)判定期間
+//ボラ(ATR)判定閾値(pips)
+extern double Mask_ATR_th = 20;
+//ボラ(ATR)判定期間
+input int Mask_ATR_period = 20;
 
-extern double Narrow_Factor = 30; // ma13とma5の差がma21とma13の差のX%より小さいときをエントリー対象とする
-extern double Slope_Det_Factor = 10; // ATRのX%以上の傾きがあるときをエントリー対象とする
-extern double Dist_Det_Factor = 10; // ma21, ma13, ma5がそれぞれATRのX%以上離れているときをエントリー対象とする
+// ma13とma5の差がma21とma13の差のX%より小さいときをエントリー対象とする
+extern double Narrow_Factor = 30;
+// ATRのX%以上の傾きがあるときをエントリー対象とする
+extern double Slope_Det_Factor = 10;
+// ma21, ma13, ma5がそれぞれATRのX%以上離れているときをエントリー対象とする
+extern double Dist_Det_Factor = 10;
 
 const int period = PERIOD_M5;
 
