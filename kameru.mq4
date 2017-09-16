@@ -151,7 +151,7 @@ int entryOnPerfectOrder() {
       if(ma21_1 + ds < ma13_1 && ma13_1 + ds < ma5_1 && ma21 + ds < ma13 && ma13 + ds < ma5) {
 
        //21日線と13日線の差よりも、13日線と5日線との差が小さいときにエントリー
-        if(Narrow_Factor * (ma13 - ma21) > ma5 - ma13) {
+        if((Narrow_Factor * (ma13 - ma21) > ma5 - ma13) && (Narrow_Factor * (ma13_1 - ma21_1) > ma5_1 - ma13_1)) {
  
           double q0 = iOpen(thisSymbol, period, 1);
           double q1 = iClose(thisSymbol, period, 1);
@@ -172,7 +172,7 @@ int entryOnPerfectOrder() {
       if(ma21_1 > ds + ma13_1 && ma13_1 > ds + ma5_1 && ma21 > ds + ma13 && ma13 > ds + ma5) {
       
         //21日線と13日線の差よりも、13日線と5日線との差が小さいときにエントリー
-        if(Narrow_Factor * (ma21 - ma13) > ma13 - ma5) {
+        if((Narrow_Factor * (ma21 - ma13) > ma13 - ma5) && (Narrow_Factor * (ma21_1 - ma13_1) > ma13_1 - ma5_1)) {
 
           double q0 = iOpen(thisSymbol, period, 1);
           double q1 = iClose(thisSymbol, period, 1);
