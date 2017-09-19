@@ -45,12 +45,141 @@ extern double Slope_Det_Factor = 10;
 // ma21, ma13, ma5がそれぞれATRのX%以上離れているときをエントリー対象とする
 extern double Dist_Det_Factor = 10;
 
+
+// 水平線を引くための、高値安値のスキャン回数
+input int SearchHighLowTimes = 8;
+
+// スキャンした高値安値が全てこの数値pips以内に収まっていれば水平線を引く
+extern double DrawHLineThresh = 100;
+
+const string hLineID = "high line";
+const string lLineID = "low line";
+
+double highPrice;
+double lowPrice;
+
 const int period = PERIOD_M5;
 
 string thisSymbol;
 double minSL;
 
 datetime lastExitTime;
+
+
+int searchHighTime(double& price, int start = 0) {
+  
+  price = 0.0;
+  int anchor = start + 1;
+
+  for(int i = 0; True; i++) {
+    if(price <= iHigh(thisSymbol, PERIOD_H1, anchor + i)) {
+      price = iHigh(thisSymbol, PERIOD_H1, anchor + i);
+    }
+    else {
+      break;
+    }
+  }
+  
+  return anchor;
+}
+
+
+int searchLowTime(double& price, int start = 0) {
+  
+  price = 0.0;
+  int anchor = start + 1;
+
+  for(int i = 0; True; i++) {
+    if(price <= iLow(thisSymbol, PERIOD_H1, anchor + i)) {
+      price = iLow(thisSymbol, PERIOD_H1, anchor + i);
+    }
+    else {
+      break;
+    }
+  }
+  
+  return anchor;
+}
+
+
+double getHighLine() {
+
+  double min = 1000000.0;
+  double max = 0;
+  int t = 0;
+
+  for(int i = 0; i < SearchHighLowTimes; i++) {
+    double price;
+    t = searchHighTime(price, t);
+
+    if(max < price) {
+      max = price;
+    }
+    if(price < min) {
+      min = price;
+    }
+  }
+
+  if(max - min < DrawHLineThresh) {
+    return (max + min) / 2.0;
+//    return max;
+  }
+  else {
+    return -1.0;
+  }
+}
+
+
+double getLowLine() {
+
+  double min = 1000000.0;
+  double max = 0;
+  int t = 0;
+
+  for(int i = 0; i < SearchHighLowTimes; i++) {
+    double price;
+    t = searchLowTime(price, t);
+
+    if(max < price) {
+      max = price;
+    }
+    if(price < min) {
+      min = price;
+    }
+  }
+
+  if(max - min < DrawHLineThresh) {
+    return (max + min) / 2.0;
+//    return min;
+  }
+  else {
+    return -1.0;
+  }
+}
+
+
+void drawHLine(string id, double pos, color clr = clrYellow, int width = 1, int style = 1) {
+
+  if(style < 0 || 4 < style) {
+    style = 0;
+  }
+  if(width < 1) {
+    width = 1;
+  }
+  if(pos < 0) {
+    pos = 0;
+  }
+
+  ObjectCreate(id, OBJ_HLINE, 0, 0, pos);
+  ObjectSet(id, OBJPROP_COLOR, clr);
+  ObjectSet(id, OBJPROP_WIDTH, width);
+  ObjectSet(id, OBJPROP_STYLE, style);
+  ObjectSet(id, OBJPROP_TIMEFRAMES, OBJ_ALL_PERIODS);
+  
+  ObjectSetInteger(0, id, OBJPROP_SELECTABLE, false);
+  ObjectSetText(id, id, 12, "Arial", clr);
+}
+
 
 
 //エントリーしない共通条件の判定
@@ -220,12 +349,19 @@ int OnInit()
   TP_pips *= 10.0 * Point;
   SL_pips *= 10.0 * Point;
   Mask_ATR_th *= 10.0 * Point;
+  DrawHLineThresh *= 10.0 * Point;
   
   Narrow_Factor *= 0.01;
   Slope_Det_Factor *= 0.01;
   Dist_Det_Factor *= 0.01;
   
   lastExitTime = -1;
+
+  highPrice = getHighLine();
+  lowPrice = getLowLine();
+
+  drawHLine(hLineID, highPrice);
+  drawHLine(lLineID, lowPrice);  
   
 //---
    return(INIT_SUCCEEDED);
@@ -236,14 +372,29 @@ int OnInit()
 void OnDeinit(const int reason)
   {
 //---
-   
+
+  ObjectDelete(0, hLineID);
+  ObjectDelete(0, lLineID);
+
   }
+
+void moveHLine(string id, double pos) {
+  ObjectSet(id, OBJPROP_PRICE1, pos);
+}
+
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
 //+------------------------------------------------------------------+
 void OnTick()
 {
 //---
+
+  highPrice = getHighLine();
+  lowPrice = getLowLine();
+
+  moveHLine(hLineID, highPrice);
+  moveHLine(lLineID, lowPrice);  
+
 
   //ポジションを保有していなかったらエントリー条件判定
   if(countPositions() == 0) {
